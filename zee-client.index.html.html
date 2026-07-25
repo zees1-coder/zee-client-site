@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zee Client — A clean, legit utility client for Minecraft</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c14;
+    --bg-2: #0e1120;
+    --glass: rgba(255, 255, 255, 0.05);
+    --glass-strong: rgba(255, 255, 255, 0.08);
+    --stroke: rgba(255, 255, 255, 0.10);
+    --stroke-bright: rgba(255, 255, 255, 0.18);
+    --text: #eef0f8;
+    --text-dim: #9aa1b8;
+    --accent: #6f8bff;
+    --accent-2: #4fd8c8;
+    --radius: 18px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, .brand, .btn { font-family: 'Space Grotesk', sans-serif; }
+
+  /* ---------- ambient background ---------- */
+  .aurora {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 70% -10%, #141a33 0%, var(--bg) 55%);
+  }
+  .aurora::before, .aurora::after {
+    content: "";
+    position: absolute;
+    width: 55vw;
+    height: 55vw;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.35;
+  }
+  .aurora::before {
+    background: #3d55d8;
+    top: -18vw;
+    left: -12vw;
+    animation: drift1 26s ease-in-out infinite alternate;
+  }
+  .aurora::after {
+    background: #1c8f84;
+    bottom: -22vw;
+    right: -14vw;
+    animation: drift2 32s ease-in-out infinite alternate;
+  }
+  @keyframes drift1 { to { transform: translate(9vw, 7vw) scale(1.12); } }
+  @keyframes drift2 { to { transform: translate(-7vw, -9vw) scale(1.08); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+
+  /* ---------- nav ---------- */
+  nav {
+    position: sticky;
+    top: 16px;
+    z-index: 50;
+    margin: 16px auto 0;
+    max-width: 1060px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 22px;
+    border-radius: 999px;
+    background: var(--glass);
+    border: 1px solid var(--stroke);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+  .brand {
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text);
+    text-decoration: none;
+  }
+  .brand-mark {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid;
+    place-items: center;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #0a0c14;
+  }
+  nav ul {
+    display: flex;
+    gap: 26px;
+    list-style: none;
+  }
+  nav ul a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.92rem;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  nav ul a:hover, nav ul a:focus-visible { color: var(--text); }
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  /* ---------- layout helpers ---------- */
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+  section { padding: 90px 0; }
+  .eyebrow {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    margin-bottom: 14px;
+  }
+  h2 { font-size: clamp(1.7rem, 3.4vw, 2.4rem); font-weight: 700; margin-bottom: 14px; }
+  .lede { color: var(--text-dim); max-width: 560px; }
+
+  /* ---------- hero ---------- */
+  .hero {
+    padding: 110px 0 80px;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 48px;
+    align-items: center;
+  }
+  .hero h1 {
+    font-size: clamp(2.4rem, 5.4vw, 3.7rem);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+  }
+  .hero h1 span {
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero p { color: var(--text-dim); font-size: 1.08rem; max-width: 480px; margin-bottom: 30px; }
+  .btn-row { display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn {
+    padding: 13px 26px;
+    border-radius: 12px;
+    font-size: 0.98rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    display: inline-block;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #0a0c14;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(111, 139, 255, 0.35); }
+  .btn-ghost {
+    background: var(--glass);
+    border-color: var(--stroke);
+    color: var(--text);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .btn-ghost:hover { background: var(--glass-strong); transform: translateY(-2px); }
+  .hero-note { margin-top: 18px; font-size: 0.85rem; color: var(--text-dim); }
+
+  /* ---------- HUD mockup (signature element) ---------- */
+  .hud {
+    position: relative;
+    border-radius: var(--radius);
+    background: var(--glass);
+    border: 1px solid var(--stroke);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 26px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  }
+  .hud-titlebar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--stroke-bright); }
+  .dot:first-child { background: #ff6b6b; }
+  .hud-label {
+    margin-left: auto;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .keys {
+    display: grid;
+    grid-template-columns: repeat(3, 58px);
+    grid-template-rows: repeat(2, 58px);
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 22px;
+  }
+  .key {
+    border-radius: 10px;
+    background: var(--glass-strong);
+    border: 1px solid var(--stroke);
+    display: grid;
+    place-items: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+  }
+  .key.wide { grid-column: 1 / -1; height: 40px; align-self: end; font-size: 0.7rem; letter-spacing: 0.14em; }
+  .key.lit {
+    background: linear-gradient(135deg, rgba(111,139,255,0.9), rgba(79,216,200,0.9));
+    border-color: transparent;
+    color: #0a0c14;
+  }
+  .modlist { list-style: none; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+  .modlist li {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 8px;
+    background: var(--glass-strong);
+    border: 1px solid var(--stroke);
+    border-right: 3px solid var(--accent);
+  }
+
+  /* ---------- features ---------- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-top: 42px;
+  }
+  .card {
+    border-radius: var(--radius);
+    background: var(--glass);
+    border: 1px solid var(--stroke);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 26px;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    border-color: var(--stroke-bright);
+    background: var(--glass-strong);
+  }
+  .card h3 { font-size: 1.08rem; font-weight: 600; margin: 14px 0 8px; }
+  .card p { font-size: 0.92rem; color: var(--text-dim); }
+  .card-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(111,139,255,0.22), rgba(79,216,200,0.22));
+    border: 1px solid var(--stroke);
+    display: grid;
+    place-items: center;
+    font-size: 1.2rem;
+  }
+
+  /* ---------- legit callout ---------- */
+  .legit {
+    border-radius: var(--radius);
+    border: 1px solid rgba(79, 216, 200, 0.35);
+    background: linear-gradient(135deg, rgba(79,216,200,0.08), rgba(111,139,255,0.06));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 40px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 26px;
+    align-items: center;
+  }
+  .shield {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--accent-2), var(--accent));
+    display: grid;
+    place-items: center;
+    font-size: 1.7rem;
+  }
+  .legit h2 { margin-bottom: 8px; }
+  .legit p { color: var(--text-dim); max-width: 640px; }
+
+  /* ---------- launcher ---------- */
+  .launcher {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 48px;
+    align-items: center;
+  }
+  .launcher-mock {
+    border-radius: var(--radius);
+    background: var(--glass);
+    border: 1px solid var(--stroke);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 22px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  }
+  .mock-row {
+    height: 14px;
+    border-radius: 7px;
+    background: var(--glass-strong);
+    margin-bottom: 12px;
+  }
+  .mock-row.short { width: 55%; }
+  .progress {
+    height: 10px;
+    border-radius: 5px;
+    background: var(--glass-strong);
+    overflow: hidden;
+    margin: 20px 0 14px;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 68%;
+    border-radius: 5px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    animation: fill 3.2s ease-in-out infinite alternate;
+  }
+  @keyframes fill { from { width: 24%; } to { width: 86%; } }
+  .mock-btn {
+    height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid;
+    place-items: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    color: #0a0c14;
+  }
+  .steps { list-style: none; margin-top: 26px; display: flex; flex-direction: column; gap: 16px; }
+  .steps li { display: flex; gap: 14px; align-items: flex-start; }
+  .step-dot {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--glass-strong);
+    border: 1px solid var(--stroke-bright);
+    display: grid;
+    place-items: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--accent-2);
+  }
+  .steps strong { display: block; font-weight: 600; }
+  .steps span { color: var(--text-dim); font-size: 0.92rem; }
+
+  /* ---------- download ---------- */
+  .download { text-align: center; }
+  .download .lede { margin: 0 auto 34px; }
+  .dl-cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 340px));
+    gap: 18px;
+    justify-content: center;
+  }
+  .dl-card {
+    border-radius: var(--radius);
+    background: var(--glass);
+    border: 1px solid var(--stroke);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 30px;
+    text-align: left;
+  }
+  .dl-card h3 { font-size: 1.15rem; margin-bottom: 6px; }
+  .dl-card .meta { font-size: 0.82rem; color: var(--text-dim); margin-bottom: 18px; }
+  .dl-card .btn { width: 100%; text-align: center; }
+
+  footer {
+    border-top: 1px solid var(--stroke);
+    padding: 34px 0;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+  }
+  footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 880px) {
+    .hero, .launcher { grid-template-columns: 1fr; }
+    .grid { grid-template-columns: 1fr 1fr; }
+    nav ul { display: none; }
+  }
+  @media (max-width: 580px) {
+    .grid, .dl-cards { grid-template-columns: 1fr; }
+    .legit { grid-template-columns: 1fr; }
+    section { padding: 64px 0; }
+  }
+</style>
+</head>
+<body>
+<div class="aurora" aria-hidden="true"></div>
+
+<nav>
+  <a class="brand" href="#top"><span class="brand-mark">Z</span>Zee Client</a>
+  <ul>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#legit">Fair play</a></li>
+    <li><a href="#launcher">Launcher</a></li>
+    <li><a href="#download">Download</a></li>
+  </ul>
+</nav>
+
+<header class="hero wrap" id="top">
+  <div>
+    <h1>A clean, legit utility client for <span>Minecraft</span>.</h1>
+    <p>Zee Client is a Fabric mod for Minecraft 1.21.11 with an animated GUI, a full keybind system, and the quality-of-life modules you actually use — nothing you'd get banned for.</p>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="#download">Download Zee Client</a>
+      <a class="btn btn-ghost" href="#features">See the features</a>
+    </div>
+    <p class="hero-note">Free · Fabric 1.21.11 · Java 21</p>
+  </div>
+
+  <div class="hud" aria-label="Preview of the in-game HUD">
+    <div class="hud-titlebar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="hud-label">In-game HUD</span>
+    </div>
+    <div class="keys" id="keys">
+      <div class="key"></div>
+      <div class="key" data-k="w">W</div>
+      <div class="key"></div>
+      <div class="key" data-k="a">A</div>
+      <div class="key" data-k="s">S</div>
+      <div class="key" data-k="d">D</div>
+      <div class="key wide" data-k="space">SPACE</div>
+    </div>
+    <ul class="modlist">
+      <li>Fullbright</li>
+      <li>Freecam</li>
+      <li>Zoom</li>
+      <li>Keystrokes</li>
+      <li>ArrayList HUD</li>
+    </ul>
+  </div>
+</header>
+
+<section id="features">
+  <div class="wrap">
+    <p class="eyebrow">Modules</p>
+    <h2>Everything useful. Nothing shady.</h2>
+    <p class="lede">Every module is toggleable, rebindable, and rendered through Zee's custom animated GUI system.</p>
+    <div class="grid">
+      <div class="card">
+        <div class="card-icon">☀️</div>
+        <h3>Fullbright</h3>
+        <p>See caves and night builds clearly without stacking potions or torch-spamming.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🎥</div>
+        <h3>Freecam</h3>
+        <p>Detach your camera to scout builds and plan projects from any angle.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔍</div>
+        <h3>Zoom</h3>
+        <p>Smooth, scroll-adjustable zoom on a keybind — spot things from far across the map.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">⌨️</div>
+        <h3>Keystrokes</h3>
+        <p>An on-screen WASD overlay that lights up with your inputs. Great for PvP clips.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📋</div>
+        <h3>ArrayList HUD</h3>
+        <p>A clean list of your active modules, always visible in the corner of your screen.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🎛️</div>
+        <h3>Full keybind system</h3>
+        <p>Bind any module to any key, straight from the animated in-game GUI.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="legit">
+  <div class="wrap">
+    <div class="legit">
+      <div class="shield">🛡️</div>
+      <div>
+        <h2>Strictly fair play</h2>
+        <p>Zee Client is legit-only by design. No ESP, no combat cheats, no chunk finders — and that's a hard boundary, not a settings toggle. Play on your favourite servers without worrying about what's under the hood.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="launcher">
+  <div class="wrap launcher">
+    <div class="launcher-mock" aria-label="Preview of the Zee Launcher">
+      <div class="mock-row short"></div>
+      <div class="mock-row"></div>
+      <div class="mock-row short"></div>
+      <div class="progress"><div class="progress-fill"></div></div>
+      <div class="mock-btn">LAUNCH</div>
+    </div>
+    <div>
+      <p class="eyebrow">Zee Launcher</p>
+      <h2>From download to in-game in one click.</h2>
+      <p class="lede">The Zee Launcher is a desktop app that handles the whole setup for you — no manual Fabric installs, no digging through folders.</p>
+      <ul class="steps">
+        <li><span class="step-dot">1</span><div><strong>Downloads Minecraft</strong><span>Fetched directly from Mojang's official servers.</span></div></li>
+        <li><span class="step-dot">2</span><div><strong>Installs Fabric</strong><span>The right loader and API versions, set up automatically.</span></div></li>
+        <li><span class="step-dot">3</span><div><strong>Launches the game</strong><span>Zee Client included and ready — just press play.</span></div></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="download" class="download">
+  <div class="wrap">
+    <p class="eyebrow">Get started</p>
+    <h2>Download Zee</h2>
+    <p class="lede">Grab the launcher for the easiest setup, or just the client jar if you already run Fabric.</p>
+    <div class="dl-cards">
+      <div class="dl-card">
+        <h3>Zee Launcher</h3>
+        <p class="meta">Windows · installs everything for you</p>
+        <a class="btn btn-primary" href="#">Download launcher</a>
+      </div>
+      <div class="dl-card">
+        <h3>Zee Client (mod only)</h3>
+        <p class="meta">Fabric 1.21.11 · requires Fabric API · Java 21</p>
+        <a class="btn btn-ghost" href="#">Download .jar</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 Zee Client. Not affiliated with Mojang or Microsoft.</span>
+    <span>Made with ♥ for the Minecraft community</span>
+  </div>
+</footer>
+
+<script>
+  // Keystrokes HUD animation — simulates WASD + space inputs
+  (function () {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const seq = ['w', 'w', 'a', 'w', 'd', 'w', 'space', 's', 'a', 'w', 'd', 'space'];
+    let i = 0;
+    setInterval(function () {
+      document.querySelectorAll('.key.lit').forEach(k => k.classList.remove('lit'));
+      const el = document.querySelector('.key[data-k="' + seq[i % seq.length] + '"]');
+      if (el) el.classList.add('lit');
+      if (seq[i % seq.length] !== 'w' && Math.random() > 0.5) {
+        const w = document.querySelector('.key[data-k="w"]');
+        if (w) w.classList.add('lit');
+      }
+      i++;
+    }, 420);
+  })();
+</script>
+</body>
+</html>
